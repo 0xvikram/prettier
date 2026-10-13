@@ -83,6 +83,7 @@ function handleOwnLineComment(context) {
     handleSwitchStatementComments,
     handleTryStatementComments,
     handleClassComments,
+    handleEnumAndModuleComments,
     handleForXStatementComments,
     handleUnionTypeComments,
     handleMatchOrPatternComments,
@@ -116,6 +117,7 @@ function handleEndOfLineComment(context) {
     handleSwitchStatementComments,
     handleTryStatementComments,
     handleClassComments,
+    handleEnumAndModuleComments,
     handleForXStatementComments,
     handleLabeledStatementComments,
     handleCallExpressionComments,
@@ -373,6 +375,28 @@ function handleClassComments({
       }
     }
   }
+  return false;
+}
+
+const isEnumOrModuleBody = createTypeCheckFunction([
+  "TSEnumBody",
+  "TSModuleBlock",
+]);
+function handleEnumAndModuleComments({
+  comment,
+  enclosingNode,
+  followingNode,
+}) {
+  if (
+    (enclosingNode?.type === "TSEnumDeclaration" ||
+      enclosingNode?.type === "TSModuleDeclaration") &&
+    followingNode === enclosingNode.body &&
+    isEnumOrModuleBody(followingNode)
+  ) {
+    addBlockStatementFirstComment(followingNode, comment);
+    return true;
+  }
+
   return false;
 }
 

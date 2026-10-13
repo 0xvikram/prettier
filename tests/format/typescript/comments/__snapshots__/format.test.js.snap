@@ -443,6 +443,92 @@ class A {
 ================================================================================
 `;
 
+exports[`20161.ts format 1`] = `
+====================================options=====================================
+parsers: ["typescript"]
+                                                      printWidth: 80 (default) |
+=====================================input======================================
+enum A // comment
+{ A }
+
+const enum B // comment
+{ A }
+
+enum C
+// comment
+{ A }
+
+enum D // comment
+{}
+
+enum E /* comment */ { A }
+
+namespace F // comment
+{ a; }
+
+namespace G.H // comment
+{ a; }
+
+namespace I // comment
+{}
+
+declare module "j" // comment
+{ a; }
+
+declare global // comment
+{ a; }
+
+=====================================output=====================================
+enum A {
+  // comment
+  A,
+}
+
+const enum B {
+  // comment
+  A,
+}
+
+enum C {
+  // comment
+  A,
+}
+
+enum D {
+  // comment
+}
+
+enum E /* comment */ {
+  A,
+}
+
+namespace F {
+  // comment
+  a;
+}
+
+namespace G.H {
+  // comment
+  a;
+}
+
+namespace I {
+  // comment
+}
+
+declare module "j" {
+  // comment
+  a;
+}
+
+declare global {
+  // comment
+  a;
+}
+
+================================================================================
+`;
+
 exports[`abstract-class.ts format 1`] = `
 ====================================options=====================================
 parsers: ["typescript"]
