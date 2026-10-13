@@ -164,13 +164,30 @@ function shouldQuoteKey(path, options) {
   );
 }
 
-function shouldUnquoteKey(path, options) {
+function shouldUnquoteKey(path, options, node = path.node) {
   return (
     (options.quoteProps === "as-needed" ||
       (options.quoteProps === "consistent" &&
         !hasSiblingsRequireQuoted(path, options))) &&
-    isKeySafeToUnquote(path.node, options)
+    isKeySafeToUnquote(node, options)
   );
+}
+
+// Name of the key of `node` (`path.node` or one of its siblings),
+// if it's an identifier or will be unquoted
+function getIdentifierKeyName(path, options, node) {
+  if (isComputedKey(node)) {
+    return;
+  }
+
+  const key = getKey(node);
+  if (key?.type === "Identifier") {
+    return key.name;
+  }
+
+  if (isStringLiteral(key) && shouldUnquoteKey(path, options, node)) {
+    return key.value;
+  }
 }
 
 /*
@@ -232,4 +249,4 @@ function printKey(path, options, print) {
   return print(property);
 }
 
-export { printKey };
+export { getIdentifierKeyName, printKey };

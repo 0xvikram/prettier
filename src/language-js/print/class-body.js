@@ -19,6 +19,7 @@ import {
 import { createTypeCheckFunction } from "../utilities/create-type-check-function.js";
 import { isNextLineEmpty } from "../utilities/is-next-line-empty.js";
 import { shouldHugTheOnlyParameter } from "./function-parameters.js";
+import { getIdentifierKeyName } from "./key.js";
 import { printSemicolon, printTrailingComma } from "./miscellaneous.js";
 
 /*
@@ -64,8 +65,11 @@ function printClassBody(path, options, print) {
     if (
       !isFlowRecordDeclaration &&
       !isObjectType &&
-      (shouldPrintSemicolonAfterClassProperty({ node, next }, options) ||
-        shouldPrintSemicolonAfterInterfaceProperty({ node, next }, options))
+      (shouldPrintSemicolonAfterClassProperty(path, options, { node, next }) ||
+        shouldPrintSemicolonAfterInterfaceProperty(path, options, {
+          node,
+          next,
+        }))
     ) {
       parts.push(";");
     }
@@ -193,10 +197,10 @@ function printClassMemberSemicolon(path, options) {
 
     if (
       options.semi ||
-      shouldPrintSemicolonAfterInterfaceProperty(
-        { node: path.node, next: path.next },
-        options,
-      )
+      shouldPrintSemicolonAfterInterfaceProperty(path, options, {
+        node: path.node,
+        next: path.next,
+      })
     ) {
       return ";";
     }
@@ -218,30 +222,29 @@ const isClassProperty = createTypeCheckFunction([
   "TSAbstractAccessorProperty",
 ]);
 
-const isKeywordProperty = (node) => {
-  if (node.computed || node.typeAnnotation) {
+const isKeywordProperty = (path, options) => {
+  const { node } = path;
+  if (node.typeAnnotation) {
     return false;
   }
 
-  const { type, name } = node.key;
-  return (
-    type === "Identifier" &&
-    (name === "static" || name === "get" || name === "set")
-  );
+  const name = getIdentifierKeyName(path, options, node);
+  return name === "static" || name === "get" || name === "set";
 };
 
 /**
  * @returns {boolean}
  */
 function shouldPrintSemicolonAfterClassProperty(
-  { node, next: nextNode },
+  path,
   options,
+  { node, next: nextNode },
 ) {
   if (options.semi || !isClassProperty(node)) {
     return false;
   }
 
-  if (!node.value && isKeywordProperty(node)) {
+  if (!node.value && isKeywordProperty(path, options)) {
     return true;
   }
 
@@ -257,11 +260,9 @@ function shouldPrintSemicolonAfterClassProperty(
     return false;
   }
 
-  if (!nextNode.computed && nextNode.key?.type === "Identifier") {
-    const { name } = nextNode.key;
-    if (name === "in" || name === "instanceof") {
-      return true;
-    }
+  const nextKeyName = getIdentifierKeyName(path, options, nextNode);
+  if (nextKeyName === "in" || nextKeyName === "instanceof") {
+    return true;
   }
 
   // Flow variance sigil +/- requires semi if there's no
@@ -316,14 +317,15 @@ function shouldPrintSemicolonAfterClassProperty(
 
 const isInterfaceProperty = createTypeCheckFunction(["TSPropertySignature"]);
 function shouldPrintSemicolonAfterInterfaceProperty(
-  { node, next: nextNode },
+  path,
   options,
+  { node, next: nextNode },
 ) {
   if (options.semi || !isInterfaceProperty(node)) {
     return false;
   }
 
-  if (isKeywordProperty(node)) {
+  if (isKeywordProperty(path, options)) {
     return true;
   }
 
